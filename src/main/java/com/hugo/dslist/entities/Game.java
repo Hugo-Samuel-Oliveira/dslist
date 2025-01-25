@@ -17,10 +17,20 @@ public class Game {
     private Integer year;
 
     private String genre;
-    private String platform;
+    private String platforms;
     private Double score;
     private String imgUrl;
+
+    /*
+    * Para mudar o tamanho que a JPA aceita como texto
+    * dado que o padrão é var char[255], com a palavra TEXT esse número
+    * aumenta, dado que objeto não é mais tratado como uma sequência de chars,
+    * mas sim como um texto padrão
+    * */
+    @Column(columnDefinition = "TEXT")
     private String shortDescription;
+
+    @Column(columnDefinition = "TEXT")
     private String longDescription;
 
     public Game() {
@@ -32,7 +42,7 @@ public class Game {
         this.title = title;
         this.year = year;
         this.genre = genre;
-        this.platform = platform;
+        this.platforms = platform;
         this.score = score;
         this.imgUrl = imgUrl;
         this.shortDescription = shortDescription;
@@ -72,11 +82,11 @@ public class Game {
     }
 
     public String getPlatform() {
-        return platform;
+        return platforms;
     }
 
     public void setPlatform(String platform) {
-        this.platform = platform;
+        this.platforms = platform;
     }
 
     public Double getScore() {
