@@ -1,9 +1,10 @@
 # dslist
 ---
  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+---
 # 🚀 Sistema de Seleção de Jogos - Spring Boot
 
-Este é um **projeto de estudo** desenvolvido com o framework **Spring Boot**. O objetivo principal é construir uma API RESTful para selecionar e listar jogos de diferentes tipos, como **RPG e Aventura** e **Plataforma**, utilizando um banco de dados **H2** para persistência. A aplicação oferece endpoints para consultar jogos, categorias e associá-los a diferentes listas.
+Este é um **projeto de estudo** desenvolvido com o framework **Spring Boot**. O objetivo principal é construir uma API RESTful para selecionar e listar jogos de diferentes tipos, como **RPG e Aventura** e **Plataforma**, utilizando o banco de dados **H2** para testes e **PostgreSQL** para ambiente de desenvolvimento. A aplicação oferece endpoints para consultar jogos, categorias e associá-los a diferentes listas.
 
 ⚠️ **Este projeto é destinado a fins educacionais e não deve ser usado em produção.**
 
@@ -33,46 +34,139 @@ A estrutura do código segue a arquitetura típica de uma aplicação Spring Boo
 
 ## 🛠 Banco de Dados
 
-O projeto utiliza o banco de dados **H2**, que é embutido no projeto e não exige instalação externa. As principais tabelas no banco de dados são:
+O projeto usa o banco de dados **H2** para testes e **PostgreSQL** para desenvolvimento. Para configurar o PostgreSQL, foi utilizado o Docker. A seguir, o arquivo `docker-compose.yml` para rodar o PostgreSQL e o PgAdmin:
+
+### 🎯 docker-compose.yml
+
+```yaml
+version: "3.7"
+services:
+  # ====================================================================================================================
+  # POSTGRES SERVER
+  # ====================================================================================================================
+  pg-docker:
+    image: postgres:14-alpine
+    container_name: dev-postgresql
+    environment:
+      POSTGRES_DB: mydatabase
+      POSTGRES_PASSWORD: 1234567
+    ports:
+      - 5433:5432
+    volumes:
+      - ./.data/postgresql/data:/var/lib/postgresql/data
+    networks:
+      - dev-network
+  # ====================================================================================================================
+  # PGADMIN
+  # ====================================================================================================================
+  pgadmin-docker:
+    image: dpage/pgadmin4
+    container_name: dev-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: me@example.com
+      PGADMIN_DEFAULT_PASSWORD: 1234567
+    ports:
+      - 5050:80
+    volumes:
+      - ./.data/pgadmin:/var/lib/pgadmin
+    depends_on:
+      - pg-docker
+    networks:
+      - dev-network
+# ======================================================================================================================
+# REDE
+# ======================================================================================================================
+networks:
+  dev-network:
+    driver: bridge
+```
+
+## 🌍 Como Rodar o Projeto
+
+### Clonando o Repositório
+
+1. Primeiro, clone o repositório do projeto para sua máquina local:
+
+```bash
+git clone https://github.com/usuário/repositorio.git
+cd repositorio
+```
+
+2. Agora, para **executar o projeto no ambiente de testes** com **H2**, mantenha a seguinte configuração no arquivo `application.properties`:
+
+```properties
+spring.profiles.active=${APP_PROFILE:test}
+```
+
+Isso fará com que a aplicação use o banco de dados **H2** (modo de testes).
+
+3. Para **executar o projeto no ambiente de desenvolvimento** com **PostgreSQL**, altere a configuração no arquivo `application.properties` para:
+
+```properties
+spring.profiles.active=${APP_PROFILE:dev}
+```
+
+Isso fará com que a aplicação use o **PostgreSQL**.
+
+4. Caso esteja utilizando o ambiente de desenvolvimento, execute o seguinte comando para iniciar os containers do Docker:
+
+```bash
+docker-compose up -d
+```
+
+5. O banco de dados PostgreSQL será iniciado automaticamente no container `dev-postgresql` na porta `5433`.
+
+6. Para acessar o **PgAdmin** no ambiente de desenvolvimento, abra o navegador e vá para a URL:
+
+```
+http://localhost:5050
+```
+
+Use as credenciais `me@example.com` / `1234567` para logar no PgAdmin.
+
+7. Conecte-se ao banco de dados PostgreSQL configurado, utilizando as seguintes credenciais:
+   - **Host**: `pg-docker`
+   - **User**: `postgres`
+   - **Password**: `1234567`
+   - **Database**: `mydatabase`
+
+### Acessando o Banco de Dados H2 no Modo de Testes
+
+Quando o **perfil de testes** (`test`) está ativo, o H2 é usado como banco de dados. Para acessar o banco de dados **H2**:
+
+1. Ao executar a aplicação, a URL de acesso ao console H2 será exibida no terminal. Geralmente, o endereço padrão do console H2 é:
+
+```
+http://localhost:8080/h2-console
+```
+
+2. Ao acessar o console H2, use as seguintes credenciais para se conectar ao banco de dados:
+
+   - **JDBC URL**: `jdbc:h2:mem:testdb`
+   - **User**: `sa`
+   - **Password**: (deixe em branco)
+
+3. Após logar, você poderá visualizar e consultar as tabelas no banco de dados H2.
+
+## 🗂 Estrutura das Tabelas
+
+As principais tabelas no banco de dados PostgreSQL são:
 
 - **tb_game**: Armazena os jogos, com informações como título, ano, gênero e plataformas.
 - **tb_game_list**: Armazena os tipos de listas de jogos (RPG e Aventura, Plataforma).
 - **tb_belonging**: Representa a relação entre jogos e listas, com a posição do jogo na lista.
 
-### Código SQL de Inserção (Import.sql):
+#### Código SQL de Inserção (Import.sql):
 
 ```sql
+-- Inserção das listas de jogos:
 INSERT INTO tb_game_list (name) VALUES ('Aventura e RPG');
 INSERT INTO tb_game_list (name) VALUES ('Jogos de plataforma');
 
 -- Inserção de jogos:
 INSERT INTO tb_game (title, score, game_year, genre, platforms, img_url, short_description, long_description) VALUES
-('Mass Effect Trilogy', 4.8, 2012, 'Role-playing (RPG), Shooter', 'XBox, Playstation, PC', 'https://raw.githubusercontent.com/devsuperior/java-spring-dslist/main/resources/1.png', 'RPG com elementos de tiro em terceira pessoa.', 'RPG épico com uma trama envolvente e jogabilidade imersiva. Cada escolha do jogador impacta o universo do jogo.'),
-('Red Dead Redemption 2', 4.7, 2018, 'Role-playing (RPG), Adventure', 'XBox, Playstation, PC', 'https://raw.githubusercontent.com/devsuperior/java-spring-dslist/main/resources/2.png', 'Jogo de Aventura com temática de faroeste.', 'Exploração no Velho Oeste, com uma história profunda e escolhas que afetam o desenrolar da trama.'),
-('The Witcher 3: Wild Hunt', 4.7, 2014, 'Role-playing (RPG), Adventure', 'XBox, Playstation, PC', 'https://raw.githubusercontent.com/devsuperior/java-spring-dslist/main/resources/3.png', 'Aventura épica com monstros e magia.', 'Uma história de caçada a monstros, com missões paralelas envolventes e um mundo aberto rico.'),
-('Sekiro: Shadows Die Twice', 3.8, 2019, 'Role-playing (RPG), Adventure', 'XBox, Playstation, PC', 'https://raw.githubusercontent.com/devsuperior/java-spring-dslist/main/resources/4.png', 'Aventura com combate difícil e focado em habilidade.', 'Desafiante e único em seu estilo de combate, com uma narrativa envolvente no Japão feudal.'),
-('Ghost of Tsushima', 4.6, 2012, 'Role-playing (RPG), Adventure', 'XBox, Playstation, PC', 'https://raw.githubusercontent.com/devsuperior/java-spring-dslist/main/resources/5.png', 'Aventura épica com samurais.', 'O último samurai luta para proteger sua terra de invasores mongóis, explorando um mundo aberto cheio de desafios.');
-
--- Jogos de Plataforma:
-INSERT INTO tb_game (title, score, game_year, genre, platforms, img_url, short_description, long_description) VALUES
-('Super Mario World', 4.7, 1990, 'Platform', 'Super Ness, PC', 'https://raw.githubusercontent.com/devsuperior/java-spring-dslist/main/resources/6.png', 'Clássico jogo de plataforma com Mario.', 'Jogo de plataforma com a missão de salvar a Princesa Peach.'),
-('Hollow Knight', 4.6, 2017, 'Platform', 'XBox, Playstation, PC', 'https://raw.githubusercontent.com/devsuperior/java-spring-dslist/main/resources/7.png', 'Aventura de plataforma metroidvania.', 'Jogo metroidvania com uma narrativa sutil e explorativa em um mundo subterrâneo.'),
-('Ori and the Blind Forest', 4, 2015, 'Platform', 'XBox, Playstation, PC', 'https://raw.githubusercontent.com/devsuperior/java-spring-dslist/main/resources/8.png', 'Aventura de plataforma com narrativa emocional.', 'Jogo de plataforma com belíssima arte e uma história comovente sobre o vínculo entre Ori e seu mentor.'),
-('Cuphead', 4.6, 2017, 'Platform', 'XBox, Playstation, PC', 'https://raw.githubusercontent.com/devsuperior/java-spring-dslist/main/resources/9.png', 'Plataforma com estética de desenhos animados dos anos 1930.', 'Desafiante e com uma estética única de desenhos animados vintage.'),
-('Sonic CD', 4, 1993, 'Platform', 'Sega CD, PC', 'https://raw.githubusercontent.com/devsuperior/java-spring-dslist/main/resources/10.png', 'Clássico jogo de plataforma com Sonic.', 'Jogo de plataforma clássico onde Sonic corre para salvar o mundo do vilão Dr. Robotnik.');
-
--- Relacionamentos (Belonging):
-INSERT INTO tb_belonging (list_id, game_id, position) VALUES 
-(1, 1, 0), 
-(1, 2, 1),
-(1, 3, 2),
-(1, 4, 3),
-(1, 5, 4),
-(2, 6, 0),
-(2, 7, 1),
-(2, 8, 2),
-(2, 9, 3),
-(2, 10, 4);
+('Mass Effect Trilogy', 4.8, 2012, 'Role-playing (RPG), Shooter', 'XBox, Playstation, PC', 'https://raw.githubusercontent.com/devsuperior/java-spring-dslist/main/resources/1.png', 'RPG com elementos de tiro em terceira pessoa.', 'RPG épico com uma trama envolvente e jogabilidade imersiva. Cada escolha do jogador impacta o universo do jogo.');
+...
 ```
 
 ## 🌍 Exemplo de Uso dos Endpoints
@@ -172,15 +266,29 @@ GET /lists/1/games
         "imgUrl": "https://raw.githubusercontent.com/devsuperior/java-spring-dslist/main/resources/1.png",
         "shortDescription": "RPG com elementos de tiro em terceira pessoa."
     },
-    {
-        "id": 2,
-        "title": "Red Dead Redemption 2",
-        "year": 2018,
-        "imgUrl": "https://raw.githubusercontent.com/devsuperior/java-spring-dslist/main/resources/2.png",
-        "shortDescription": "Jogo de Aventura com temática de faroeste."
-    },
     ...
 ]
 ```
+
+---
+
+## 📝 Observação para Gerar o `create.sql`
+
+1. No arquivo `application-dev.properties`, **descomente as linhas** abaixo para gerar automaticamente o arquivo `create.sql` que criará as tabelas no banco de dados:
+
+```properties
+#spring.jpa.properties.jakarta.persistence.schema-generation.create-source=metadata
+#spring.jpa.properties.jakarta.persistence.schema-generation.scripts.action=create
+#spring.jpa.properties.jakarta.persistence.schema-generation.scripts.create-target=create.sql
+#spring.jpa.properties.hibernate.hbm2ddl.delimiter=;
+```
+
+2. O arquivo `create.sql` será gerado automaticamente pela aplicação. Após isso, copie o conteúdo gerado.
+
+3. **No PgAdmin**, crie um novo banco de dados com o nome `dslist`.
+
+4. Após criar o banco de dados, cole o conteúdo do `create.sql` gerado no editor de queries do PgAdmin e execute-o para criar as tabelas necessárias.
+
+Agora, o projeto estará configurado para usar **H2** para testes e **PostgreSQL** para desenvolvimento, e você poderá acessar as tabelas criadas diretamente no PgAdmin.
 
 ---
