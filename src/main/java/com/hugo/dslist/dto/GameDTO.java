@@ -1,52 +1,27 @@
-package com.hugo.dslist.entities;
+package com.hugo.dslist.dto;
 
-import jakarta.persistence.*;
+import com.hugo.dslist.entities.Game;
+import org.springframework.beans.BeanUtils;
 
-import java.util.Objects;
-
-@Entity
-@Table(name = "tb_game")
-public class Game {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+public class GameDTO {
     private Long id;
     private String title;
-
-    @Column(name = "game_year") // Customiza o nome da coluna no banco
     private Integer year;
-
     private String genre;
     private String platforms;
     private Double score;
     private String imgUrl;
-
-    /*
-    * Para mudar o tamanho que a JPA aceita como texto
-    * dado que o padrão é var char[255], com a palavra TEXT esse número
-    * aumenta, dado que objeto não é mais tratado como uma sequência de chars,
-    * mas sim como um texto padrão
-    * */
-    @Column(columnDefinition = "TEXT")
     private String shortDescription;
-
-    @Column(columnDefinition = "TEXT")
     private String longDescription;
 
-    public Game() {
+    public GameDTO() {
 
     }
 
-    public Game(Long id, String title, Integer year, String genre, String platform, Double score, String imgUrl, String shortDescription, String longDescription) {
-        this.id = id;
-        this.title = title;
-        this.year = year;
-        this.genre = genre;
-        this.platforms = platform;
-        this.score = score;
-        this.imgUrl = imgUrl;
-        this.shortDescription = shortDescription;
-        this.longDescription = longDescription;
+    public GameDTO(Game entity) {
+        // Copia os atributos passo a passo, se estes tiverem o mesmo nome
+        // de atributos e getters / setters
+        BeanUtils.copyProperties(entity, this);
     }
 
     public Long getId() {
@@ -85,8 +60,8 @@ public class Game {
         return platforms;
     }
 
-    public void setPlatforms(String platform) {
-        this.platforms = platform;
+    public void setPlatforms(String platforms) {
+        this.platforms = platforms;
     }
 
     public Double getScore() {
@@ -119,17 +94,5 @@ public class Game {
 
     public void setLongDescription(String longDescription) {
         this.longDescription = longDescription;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-        Game game = (Game) o;
-        return Objects.equals(id, game.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(id);
     }
 }
